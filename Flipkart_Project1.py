@@ -42,7 +42,6 @@ print("CSV Columns:", csv_data.columns)
 print("Excel Columns:", excel_data.columns)
 print("JSON Columns:", json_data.columns)
 
-
 # 🔀 Merge datasets from multiple sources into one
 combined_data = pd.concat([csv_data, excel_data, json_data], ignore_index=True)
 print("\nCombined Data:")
@@ -51,7 +50,6 @@ print(combined_data.head())
 # 📋 Data Types Overview
 print("\n🧾 Data Types Overview:")
 print(combined_data.dtypes)
-
 
 # 5. Missing Value Handling (After Combining)
 combined_data['retail_price'] = combined_data['retail_price'].fillna(combined_data['retail_price'].median())
@@ -94,20 +92,16 @@ print(f"🔍 Outliers in 'discounted_price': {len(discount_outliers)} rows")
 
 # --- VISUALIZE OUTLIERS ---
 plt.figure(figsize=(12, 5))
-
 plt.subplot(1, 2, 1)
 sns.boxplot(y=combined_data['retail_price'], color='skyblue')
 plt.title("Boxplot of Retail Price")
-
 plt.subplot(1, 2, 2)
 sns.boxplot(y=combined_data['discounted_price'], color='lightgreen')
 plt.title("Boxplot of Discounted Price")
-
 plt.tight_layout()
 plt.show()
 
 # --- REMOVE OUTLIERS ---
-
 # Remove outliers from both columns
 cleaned_data = combined_data[
     (combined_data['retail_price'] >= lower_r) & (combined_data['retail_price'] <= upper_r) &
@@ -191,7 +185,7 @@ if 'location' in combined_data.columns:
     regional_sales = combined_data['location'].value_counts()
     print("\n🗺️ Regional Sales Trend:")
     print(regional_sales)
-
+    
     # Visualization
     regional_sales.head(10).plot(kind='bar', title='Top 10 Locations by Orders')
     plt.xlabel("Location")
@@ -219,7 +213,6 @@ if 'product_name' in combined_data.columns:
 else:
     print("❌ No 'product_name' column found for product-wise analysis.")
     
-
 #------Final Checks--------
 print("\n✅ Final Missing Values:")
 print(combined_data.isnull().sum())
@@ -233,3 +226,4 @@ print(combined_data[combined_data['retail_price'] < combined_data['discounted_pr
 # 11. Export Cleaned Data
 combined_data.to_csv("flipkart_cleaned_analyzed.csv", index=False)
 print("\n✅ Cleaned data exported successfully.")
+
