@@ -64,11 +64,25 @@ print(f"\n🔁 Duplicate Rows: {combined_data.duplicated().sum()}")
 combined_data = combined_data.drop_duplicates()
 print(f"✅ Shape after removing duplicates: {combined_data.shape}")
 
+# Convert price columns to numeric
+combined_data['retail_price'] = pd.to_numeric(combined_data['retail_price'], errors='coerce')
+combined_data['discounted_price'] = pd.to_numeric(combined_data['discounted_price'], errors='coerce')
+
+# Convert timestamps to datetime
+combined_data['crawl_timestamp'] = pd.to_datetime(combined_data['crawl_timestamp'], errors='coerce')
+combined_data = combined_data.dropna(subset=['crawl_timestamp'])
+combined_data['crawl_timestamp'] = combined_data['crawl_timestamp'].dt.tz_localize(None)
+combined_data['YearMonth'] = combined_data['crawl_timestamp'].dt.to_period('M')
+
+print(combined_data['crawl_timestamp'].dtypes)
+print(combined_data['crawl_timestamp'].head())
+print(combined_data['YearMonth'].dtypes)
+print(combined_data['YearMonth'].unique())
+
 #  Recalculate discount
 combined_data['discount'] = combined_data['retail_price'] - combined_data['discounted_price']
 
 # --- OUTLIER CHECK ----
-
 # Function to calculate IQR bounds
 def get_iqr_bounds(series):
     Q1 = series.quantile(0.25)
@@ -87,7 +101,7 @@ lower_d, upper_d = get_iqr_bounds(combined_data['discounted_price'])
 retail_outliers = combined_data[(combined_data['retail_price'] < lower_r) | (combined_data['retail_price'] > upper_r)]
 discount_outliers = combined_data[(combined_data['discounted_price'] < lower_d) | (combined_data['discounted_price'] > upper_d)]
 
-print(f"🔍 Outliers in 'retail_price': {len(retail_outliers)} rows")
+print(f"\n🔍 Outliers in 'retail_price': {len(retail_outliers)} rows")
 print(f"🔍 Outliers in 'discounted_price': {len(discount_outliers)} rows")
 
 # --- VISUALIZE OUTLIERS ---
@@ -101,15 +115,13 @@ plt.title("Boxplot of Discounted Price")
 plt.tight_layout()
 plt.show()
 
-# --- REMOVE OUTLIERS ---
+# --- REMOVED OUTLIERS ---
 # Remove outliers from both columns
 cleaned_data = combined_data[
     (combined_data['retail_price'] >= lower_r) & (combined_data['retail_price'] <= upper_r) &
     (combined_data['discounted_price'] >= lower_d) & (combined_data['discounted_price'] <= upper_d)
 ]
-
 print(f"\n✅ Outliers removed. Original rows: {combined_data.shape[0]}, Cleaned rows: {cleaned_data.shape[0]}")
-
 combined_data = cleaned_data.copy()  
 
 # Visualize cleaned data after outlier removal
@@ -122,6 +134,10 @@ sns.boxplot(y=combined_data['discounted_price'], color='lightgreen')
 plt.title("Discounted Price (After Outlier Removal)")
 plt.tight_layout()
 plt.show()
+
+# Step 4: Export cleaned data
+combined_data.to_csv("cleaned_combined_data.csv", index=False)
+print("✅ Cleaned dataset saved as 'cleaned_combined_data.csv'")
 
 #---- Exploratory Data Analysis (EDA) ----
 print("\n------------DataSet Info-------------------")
@@ -148,11 +164,6 @@ if 'product_category_tree' in combined_data.columns:
     print(combined_data['product_category_tree'].value_counts().head())
     
 #Monthly Sales Trend Analysis 
-combined_data['crawl_timestamp'] = pd.to_datetime(combined_data['crawl_timestamp'], errors='coerce')
-combined_data = combined_data.dropna(subset=['crawl_timestamp'])
-combined_data['crawl_timestamp'] = combined_data['crawl_timestamp'].dt.tz_localize(None)
-combined_data['YearMonth'] = combined_data['crawl_timestamp'].dt.to_period('M')
-
 if 'retail_price' in combined_data.columns and 'discounted_price' in combined_data.columns:
     combined_data['discount'] = combined_data['retail_price'] - combined_data['discounted_price']
 else:
@@ -185,7 +196,7 @@ if 'location' in combined_data.columns:
     regional_sales = combined_data['location'].value_counts()
     print("\n🗺️ Regional Sales Trend:")
     print(regional_sales)
-    
+
     # Visualization
     regional_sales.head(10).plot(kind='bar', title='Top 10 Locations by Orders')
     plt.xlabel("Location")
